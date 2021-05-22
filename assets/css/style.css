@@ -1,0 +1,19 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+.centrar {
+    justify-content: center;
+    text-align: center;
+}
+
+hr {
+    background-color: grey;
+    height: 1px;
+    border: 0;
+}
+
+.indent {
+    margin-left: 10px;
+}
