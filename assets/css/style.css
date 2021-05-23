@@ -17,3 +17,11 @@ hr {
 .indent {
     margin-left: 10px;
 }
+
+.card-img {
+    object-fit: cover;
+}
+
+.encontrado {
+    margin-left: 38%;
+}

@@ -1,5 +1,15 @@
-//funcion que crea gráfico
-let creaGrafico = (puntosGraf) => {
+// Funcion que crea el gráfico
+let creaGrafico = (poderesLabel, poderesValor) => {
+    let totalElem = poderesLabel.length;
+
+    // Armar arreglo de objetos dataPoints para gráfico
+    let puntosGraf = [];
+    for (let i = 0; i < totalElem; i++) {
+        let etiqueta = poderesLabel[i];
+        let valor = poderesValor[i];
+        let punto = { 'label': etiqueta, 'y': valor };
+        puntosGraf.push(punto)
+    }
 
     //variable que almacena gráfico
     let chart = new CanvasJS.Chart("chartContainer", {
@@ -19,60 +29,85 @@ let creaGrafico = (puntosGraf) => {
             showInLegend: true,
             legendText: "{label}",
             dataPoints: puntosGraf,
-
-
         }]
     });
-    //muestra el gráfico en el elemento seleccionado
-    chart.render();
-}
 
-function explodePie(e) {
+    // Muestra el gráfico en el elemento seleccionado
+    chart.render();
+};
+// Función que genera leyendas del gráfico
+let explodePie = (e) => {
     if (typeof(e.dataSeries.dataPoints[e.dataPointIndex].exploded) === "undefined" || !e.dataSeries.dataPoints[e.dataPointIndex].exploded) {
         e.dataSeries.dataPoints[e.dataPointIndex].exploded = true;
     } else {
         e.dataSeries.dataPoints[e.dataPointIndex].exploded = false;
     }
     e.chart.render();
+};
 
+// Función que renderiza información
+let masInformacion = (glosa) => {
+    let linea = document.createElement('hr');
+    let parrafo = document.createElement('p');
+    let detalle = document.getElementById('adicional');
+
+    parrafo.className = 'indent';
+    detalle.appendChild(linea);
+    parrafo.innerHTML = glosa;
+
+    detalle.appendChild(parrafo);
+};
+
+// Función que limpia el DOM si hubo una visita previa
+let limpiar = () => {
+    let eliminar = document.getElementById('adicional');
+    if (eliminar) {
+        eliminar.remove()
+    };
+    let grafico = document.getElementsByClassName('canvasjs-chart-canvas')[0];
+    if (grafico) {
+        grafico.remove()
+    };
 }
 
-
-
-//espera la carga del documento
+// Espera la carga del documento
 $(document).ready(function() {
+
     //capturamos elementos del DOM
     let boton = document.getElementById('boton');
-    let esNumero = 0
+    let esNumero = 0;
+
+    // Ocultar información del héroe
+    $('#datosHeroe').hide();
 
     //agregamos evento click al boton
     boton.addEventListener('click', () => {
         document.getElementsByClassName('errorNumero')[0].innerHTML = '';
         let numSuperHero = document.getElementById('idSuperHero').value;
 
-
-        // Validar si es numero de tres dígitos
-        let regex = new RegExp(/^[1234567]([0-9])?([0-9])?$/, 'gm'); // Expresión regular que sólo admite números entre 1 y 999
+        // Validar si es numero de hasta tres dígitos
+        let regex = new RegExp(/^[123456789]([0-9])?([0-9])?$/, 'gm'); // Expresión regular que sólo admite números entre 1 y 999
 
         esNumero = (regex.test(numSuperHero));
-        console.log(esNumero)
+
         if ((!esNumero) || (numSuperHero < 1 || numSuperHero >= 731)) {
             document.getElementsByClassName('errorNumero')[0].innerHTML = 'El número de Super Héroe debe estar entre 1 y 731';
         } else {
             document.getElementsByClassName('errorNumero')[0].innerHTML = ''; // El mensaje de error se limpia si se corrige o está todo correcto
 
-            let imagen = document.getElementsByClassName('card-img')[0];
-            let nombre = document.getElementsByClassName('card-title')[0];
-            let texto = document.getElementsByClassName('card-text')[0];
-            let cuerpoCard = document.getElementsByClassName('card-body')[0];
-            let linea = document.createElement('hr');
-            let parrafo = document.createElement('p');
             //función solicitud de datos
             $.ajax({
                 type: "get",
                 url: `https://www.superheroapi.com/api.php/4216420038418903/${numSuperHero}`, //end point
                 dataType: "Json",
                 success: function(data) {
+
+                    // Limpiar elementos del DOM si hubo una visita previa
+                    limpiar()
+
+                    let imagen = document.getElementsByClassName('card-img')[0];
+                    let nombre = document.getElementsByClassName('card-title')[0];
+                    let texto = document.getElementsByClassName('card-text')[0];
 
                     imagen.src = data.image.url;
                     nombre.innerHTML = `Nombre: ${data.name}`;
@@ -84,49 +119,47 @@ $(document).ready(function() {
                         }
                     };
 
+                    // Crear DIV para información adicional
+                    let adicional = document.createElement('div');
+                    let cuerpoCard = document.getElementsByClassName('card-body')[0];
+
+                    adicional.id = 'adicional';
+                    cuerpoCard.appendChild(adicional);
+
 
                     // Publicado por
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    console.log(parrafo)
-                    cuerpoCard.appendChild(linea);
+                    let glosa = '';
                     for (let property in data.biography) {
                         if (property == 'publisher') {
-                            parrafo.innerHTML = `<i>Publicado por</i>: ${data.biography[property]} `
+                            glosa = `<i>Publicado por</i>: ${data.biography[property]} `;
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
+
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Ocupación
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    cuerpoCard.appendChild(linea);
+                    glosa = '';
                     for (let property in data.work) {
                         if (property == 'occupation') {
-                            parrafo.innerHTML += `<i>Ocupación</i>: ${data.work[property]}`
+                            glosa = `<i>Ocupación</i>: ${data.work[property]}`
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Primera Aparición
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    cuerpoCard.appendChild(linea);
+                    glosa = '';
                     for (let property in data.biography) {
                         if (property == 'first-appearance') {
-                            parrafo.innerHTML = `<i>Primera Aparición</i>: ${data.biography[property]}`
+                            glosa = `<i>Primera Aparición</i>: ${data.biography[property]}`
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Altura
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    cuerpoCard.appendChild(linea);
+                    glosa = '';
                     for (let property in data.appearance) {
                         if (property == 'height') {
                             // armar arreglo simple con elementos del objeto
@@ -137,16 +170,14 @@ $(document).ready(function() {
                                 cont++;
                             };
                             // imprimir usando join
-                            parrafo.innerHTML = `<i>Altura</i>: ${enArreglo.join(" - ")}`
+                            glosa = `<i>Altura</i>: ${enArreglo.join(" - ")}`
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Peso
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    cuerpoCard.appendChild(linea);
+                    glosa = '';
                     for (let property in data.appearance) {
                         if (property == 'weight') {
                             // armar arreglo simple con elementos del objeto
@@ -157,17 +188,14 @@ $(document).ready(function() {
                                 cont++;
                             };
                             // imprimir usando join
-                            parrafo.innerHTML = `<i>Peso</i>: ${enArreglo.join(" - ")}`
+                            glosa = `<i>Peso</i>: ${enArreglo.join(" - ")}`
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
-
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Alianzas
-                    linea = document.createElement('hr');
-                    parrafo = document.createElement('p');
-                    parrafo.className = "indent";
-                    cuerpoCard.appendChild(linea);
+                    glosa = '';
                     for (let property in data.biography) {
                         if (property == 'aliases') {
                             // armar arreglo simple con elementos del objeto
@@ -178,54 +206,24 @@ $(document).ready(function() {
                                 cont++;
                             };
                             // imprimir usando join
-                            parrafo.innerHTML = `<i>Alianzas</i>: ${enArreglo.join(" ")}`
+                            glosa = `<i>Alianzas</i>: ${enArreglo.join(" ")}`
                         }
                     };
-                    cuerpoCard.appendChild(parrafo);
+                    // Llamada a función que renderiza información
+                    masInformacion(glosa)
 
                     // Datos para Graficar
-                    console.log(data.powerstats);
                     let poderesLabel = [];
                     let poderesValor = [];
                     for (let property in data.powerstats) {
                         poderesLabel.push(property)
                         poderesValor.push(data.powerstats[property])
-                            // parrafo.innerHTML = `<i>Primera Aparición</i>: ${data.biography[property]}`
                     };
-                    let totalElem = poderesLabel.length;
-                    console.log(poderesLabel)
-                    console.log(poderesValor)
+                    // Desplegar información del héroe
+                    $('#datosHeroe').show();
 
-                    // Armar arreglo de objetos dataPoints para gráfico
-                    let puntosGraf = [];
-                    for (let i = 0; i < totalElem; i++) {
-                        let etiqueta = poderesLabel[i];
-                        let valor = poderesValor[i];
-                        console.log(etiqueta)
-                        console.log(valor)
-                        let punto = { 'label': etiqueta, 'y': valor };
-                        puntosGraf.push(punto)
-
-                    }
-
-
-                    // texto.innerHTML = `Conexiones: ${data.connections.group-affiliation}`
-                    // data.forEach((heroe) => {
-                    //     console.log(heroe)
-                    //         //ejecutamos función de construcción de card
-
-                    //     // $('#gmap_canvas').attr('src', newSrc);
-                    //     //     imagen.innerHTML = heroe.id
-                    //     // construccionTabla(usuario);
-                    //     // });
-                    //     //ejecutamos función para crear gráfico
-                    //     // creaGrafico();
-                    // });
-
-                    // $('#gmap_canvas').attr('src', newSrc);
-
-
-                    creaGrafico(puntosGraf);
+                    // Crear gráfico
+                    creaGrafico(poderesLabel, poderesValor);
                 }
             });
 
